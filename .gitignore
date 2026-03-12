@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+dist
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE / OS
+.idea
+.vscode
+.DS_Store
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Turbo
+.turbo
+
+# Testing
+coverage
+.playwright
+test-results
