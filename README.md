@@ -1,4 +1,4 @@
-# Marketing Platform Test – pnpm + Turborepo Monorepo
+# Platform Test – pnpm + Turborepo Monorepo
 
 A proof-of-concept monorepo with **5 Next.js apps** and **4 shared packages**, used to validate the setup and developer workflow.
 
