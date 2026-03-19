@@ -34,7 +34,11 @@ export default function Home() {
         description="Uses react-hook-form and zod with shared UI and utils."
       />
       <Card title="Contact form">
-        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+        >
           <div>
             <label htmlFor="name">Name</label>
             <input

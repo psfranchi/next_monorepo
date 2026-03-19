@@ -85,6 +85,49 @@ All internal deps use `workspace:*` in each app’s `package.json`.
 | site-d | 3004 |
 | site-e | 3005 |
 
-## Adding tests later
+## CI (GitHub Actions)
 
-The structure supports adding Playwright (e2e) and unit tests later. Each app/package has a `test` script (currently a no-op); you can replace it with `playwright test` or `vitest` etc.
+Workflow: `.github/workflows/tests.yml` runs **unit tests** (Vitest) and **e2e** (Playwright + Turborepo) per app.
+
+### Turborepo cache on CI
+
+1. **Local cache on the runner (no secrets)**
+   The workflow restores/saves **`.turbo/cache`** with `actions/cache`, keyed by `pnpm-lock.yaml`, `turbo.json`, and root `package.json` / `tsconfig.base.json`. That speeds up repeated CI runs on the same branch/repo.
+
+2. **Remote cache (optional, Vercel)**
+   Add repository secrets **`TURBO_TOKEN`** and **`TURBO_TEAM`** (your Vercel team slug). When set, Turbo uploads/downloads cache across runs and machines. If unset, only the local `.turbo/cache` (and per-job GHA cache) applies.
+
+## Tests
+
+- **E2E:** `pnpm turbo run test --filter=site-a` (Playwright; `test` script per app).
+- **Unit:** `pnpm --filter site-a test:unit` (Vitest + React Testing Library).
+
+## Test run instructions
+
+### Unit tests (Vitest)
+
+Run one app:
+```bash
+pnpm --filter site-a test:unit
+```
+
+Run all apps (example):
+```bash
+pnpm --filter site-a test:unit
+pnpm --filter site-b test:unit
+pnpm --filter site-c test:unit
+pnpm --filter site-d test:unit
+pnpm --filter site-e test:unit
+```
+
+### E2E tests (Playwright)
+
+Run one app:
+```bash
+pnpm turbo run test --filter=site-a
+```
+
+Run all apps (example):
+```bash
+pnpm turbo run test --filter=site-a --filter=site-b --filter=site-c --filter=site-d --filter=site-e
+```

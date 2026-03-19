@@ -8,7 +8,8 @@
     "start": "next start --port 3003",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet\""
+    "test:unit": "vitest run -c vitest.config.ts",
+    "test": "pnpm exec playwright test"
   },
   "dependencies": {
     "@platform/analytics": "workspace:*",
