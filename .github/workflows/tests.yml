@@ -5,6 +5,13 @@ on:
   push:
     branches: [main]
 
+# Optional: Vercel Remote Cache (shared across machines/CI runs).
+# Repo → Settings → Secrets → add TURBO_TOKEN and TURBO_TEAM (team slug).
+# If unset, Turbo still uses the local cache restored from actions/cache below.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
 jobs:
   unit:
     name: Unit tests (${{ matrix.app }})
@@ -17,52 +24,98 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Turborepo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'package.json', 'tsconfig.base.json') }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'package.json', 'tsconfig.base.json') }}-
+            turbo-${{ runner.os }}-
+
+      - name: pnpm store cache
+        uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-node24
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-node24-
+            pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: 24
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.14.2
-          run_install: false
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.14.2 --activate
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm i -g pnpm@9.14.2
+          fi
+          pnpm --version
+          pnpm config set store-dir .pnpm-store
+          pnpm store path
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build shared packages
+        run: pnpm turbo run build --filter=@platform/ui --filter=@platform/analytics --filter=@platform/config --filter=@platform/utils
 
       - name: Run unit tests
         run: pnpm --filter ${{ matrix.app }} test:unit
 
-  e2e:
+  e2e-tests:
     name: E2E tests (${{ matrix.app }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         app: [site-a, site-b, site-c, site-d, site-e]
-
     steps:
       - uses: actions/checkout@v4
+
+      - name: Turborepo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'package.json', 'tsconfig.base.json') }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'package.json', 'tsconfig.base.json') }}-
+            turbo-${{ runner.os }}-
+
+      - name: pnpm store cache
+        uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-node24
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-node24-
+            pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: 24
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.14.2
-          run_install: false
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.14.2 --activate
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm i -g pnpm@9.14.2
+          fi
+          pnpm --version
+          pnpm config set store-dir .pnpm-store
+          pnpm store path
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Install Playwright browsers
-        run: pnpm --filter ${{ matrix.app }} exec playwright install --with-deps
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run e2e tests (Turborepo)
         run: pnpm turbo run test --filter=${{ matrix.app }}

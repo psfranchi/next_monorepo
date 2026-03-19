@@ -9,7 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run -c vitest.config.ts",
-    "test": "playwright test"
+    "test": "pnpm exec playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
-    "@playwright/test": "^1.58.2",
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
